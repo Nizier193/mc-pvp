@@ -1,0 +1,22 @@
+# Generated from config/server.properties.template by scripts/start_server.py
+# Placeholders {PORT}, {RCON_PORT}, {RCON_PASSWORD}, {LEVEL_NAME} are replaced at runtime.
+online-mode=false
+server-ip=
+server-port={PORT}
+max-players=8
+level-name={LEVEL_NAME}
+level-type=flat
+view-distance=4
+spawn-protection=0
+pvp=true
+difficulty=1
+gamemode=0
+enable-rcon=true
+rcon.port={RCON_PORT}
+rcon.password={RCON_PASSWORD}
+motd=MC-PvP Arena (1.8.9)
+white-list=false
+spawn-monsters=false
+spawn-animals=false
+generate-structures=false
+allow-nether=false

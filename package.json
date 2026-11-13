@@ -1,0 +1,16 @@
+{
+  "name": "mc-pvp",
+  "version": "0.1.0",
+  "private": true,
+  "type": "commonjs",
+  "description": "Symbolic multi-agent PvP RL environment in Minecraft 1.8.9 (Mineflayer)",
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "mineflayer": "4.25.0"
+  },
+  "overrides": {
+    "minecraft-protocol": "1.54.0"
+  }
+}

@@ -1,0 +1,46 @@
+# --- Python ---
+.venv/
+__pycache__/
+*.pyc
+*.egg-info/
+
+# --- Node ---
+node_modules/
+
+# --- Minecraft server (генерируется / скачивается) ---
+server/server.jar
+server/world*/
+server/logs/
+server/*.log
+server/ops.json
+server/whitelist.json
+server/usercache.json
+server/banned-*.json
+server/crash-reports/
+server/playerdata/
+server/stats/
+server/level.dat*
+server/region/
+server/eula.txt
+server/server.properties
+
+# --- артефакты обучения и модели ---
+artefacts/
+models/
+tb/
+runs/
+
+# --- визуализации (промежуточные/выходные) ---
+viz/
+*.gif
+*.mp4
+*.png
+*.csv
+*.jsonl
+
+# --- логи ---
+*.log
+
+# --- misc ---
+.DS_Store
+*.pid

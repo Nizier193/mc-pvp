@@ -1,0 +1,61 @@
+# ===== mc-pvp: конфиг обучения (среда + RL + вывод) =====
+# Передаётся в bash-скрипт:  bash scripts/train.sh configs/train.yaml
+
+# --- сервер Minecraft ---
+server:
+  host: 127.0.0.1
+  port: 25565
+  rcon_port: 25575
+  rcon_password: mc-pvp-dev
+  port_step: 10          # сдвиг портов для параллельных инстансов
+  version: 1.16.5
+  memory: 1G
+  level_name: world
+
+# --- поведение ботов ---
+autoaim: true            # агент всегда смотрит на врага
+dummy_still: false       # false = dummy преследует и бьёт; true = неподвижный манекен
+
+# --- арена ---
+arena:
+  side: 10
+  floor_y: 64
+  wall_height: 3
+  floor_block: stone
+  wall_block: barrier
+  origin: { x: 0, z: 0 }
+  center: { x: 5, z: 5 }
+  spawns:
+    - { x: 1.5, z: 1.5 }
+    - { x: 8.5, z: 8.5 }
+
+# --- предметы (1.16.5: white_wool, cobweb, diamond_sword) ---
+items:
+  sword_slot: 0
+  sword: diamond_sword
+  wool_slot: 1
+  wool: white_wool
+  wool_count: 32
+  cobweb_slot: 2
+  cobweb: cobweb
+  cobweb_count: 5
+
+# --- агенты (role: agent — управляется RL, dummy — скрипт) ---
+agents:
+  - { name: Red, role: agent }
+  - { name: Blue, role: dummy }
+
+# --- обучение (PPO) ---
+training:
+  algorithm: ppo
+  total_timesteps: 20000
+  n_steps: 1024
+  batch_size: 128
+  learning_rate: 0.0003
+  gamma: 0.99
+  max_episode_steps: 300
+
+# --- вывод артефактов ---
+output:
+  base_dir: artefacts
+  run_name: run_1
