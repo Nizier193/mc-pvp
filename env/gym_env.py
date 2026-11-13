@@ -28,6 +28,7 @@ class MinecraftPvPEnv(gym.Env):
         self._server_proc = None
         self._prev_dist = None
         self._steps = 0
+        self._last_raw = None
 
         self.arena = ArenaEnv(self.cfg, instance_id=instance_id)
         self._agent = self.arena.agent_names()[0]
@@ -38,7 +39,7 @@ class MinecraftPvPEnv(gym.Env):
         self.arena.wait_bots_ready()
 
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(16,), dtype=np.float32)
-        self.action_space = spaces.MultiDiscrete([5, 2, 2, 3])
+        self.action_space = spaces.MultiDiscrete([5, 2, 2, 3, 2])  # move, attack, jump, slot, use
 
     def _boot(self):
         from scripts import download_server, setup_arena, start_server
@@ -63,6 +64,7 @@ class MinecraftPvPEnv(gym.Env):
 
     # --- obs / action ---
     def _flatten(self, o):
+        self._last_raw = o
         o = o or {}
         s = o.get("self", {}) or {}
         e = o.get("enemy", {}) or {}
@@ -88,7 +90,7 @@ class MinecraftPvPEnv(gym.Env):
         ], dtype=np.float32)
 
     def _action_to_dict(self, a):
-        move, attack, jump, slot = int(a[0]), int(a[1]), int(a[2]), int(a[3])
+        move, attack, jump, slot, use = int(a[0]), int(a[1]), int(a[2]), int(a[3]), int(a[4])
         return {
             "forward": move == 1,
             "back": move == 2,
@@ -99,9 +101,13 @@ class MinecraftPvPEnv(gym.Env):
             "sneak": False,
             "yaw": None, "pitch": None,   # авто-прицел
             "attack": bool(attack),
-            "use": False,
+            "use": bool(use),
             "slot": slot,
         }
+
+    def last_raw(self):
+        """Последнее сырое наблюдение (с блоками арены) — для рендера миникарты."""
+        return self._last_raw
 
     # --- Gym API ---
     def reset(self, seed=None, options=None):

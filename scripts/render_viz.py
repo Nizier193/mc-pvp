@@ -111,6 +111,8 @@ BLACK = (20, 20, 20)
 GRID = (225, 225, 225)
 TRAIL_RED = (255, 170, 170)
 TRAIL_BLUE = (170, 200, 255)
+WOOL = (248, 248, 248)
+COBWEB = (175, 175, 175)
 
 
 def load_episode():
@@ -152,6 +154,16 @@ def draw_arena_base(img, xmin, zmin, ox, oz, side, scale, margin):
     return fx0, fy0, fx1, fy1
 
 
+def draw_blocks(img, blocks, xmin, zmin, scale, margin):
+    """Отрисовка установленных блоков: шерсть — белая, паутина — серая."""
+    for blk in blocks:
+        x, z, name = blk[0], blk[1], blk[2]
+        px, py = world_to_px(x + 0.5, z + 0.5, scale, margin, xmin, zmin)
+        color = COBWEB if (name == 'web' or 'cobweb' in name) else WOOL
+        s = scale * 0.42
+        fill_rect(img, px - s, py - s, px + s, py + s, color)
+
+
 def positions(frames):
     xs_red, zs_red, xs_blue, zs_blue, dists, hps, steps = [], [], [], [], [], [], []
     for f in frames:
@@ -174,6 +186,7 @@ def render_map(payload):
     H = int((zmax - zmin) * scale + 2 * margin)
     img = new_image(W, H, VOID)
     draw_arena_base(img, xmin, zmin, ox, oz, side, scale, margin)
+    draw_blocks(img, frames[-1].get("blocks", []) if frames else [], xmin, zmin, scale, margin)
 
     xs_red, zs_red, xs_blue, zs_blue, _, _, _ = positions(frames)
 
@@ -228,6 +241,7 @@ def render_frames(payload):
     for fi, f in enumerate(frames):
         img = new_image(W, H, VOID)
         draw_arena_base(img, xmin, zmin, ox, oz, side, scale, margin)
+        draw_blocks(img, f.get("blocks", []), xmin, zmin, scale, margin)
         # хвост Red
         for k in range(1, trail + 1):
             j = fi - k

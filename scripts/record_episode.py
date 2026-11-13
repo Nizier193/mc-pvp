@@ -97,6 +97,7 @@ def main():
                     "blue_x": None,
                     "blue_z": None,
                     "dist": e.get("dist"),
+                    "blocks": o.get("blocks", []),
                 }
                 if e.get("exists"):
                     rec["blue_x"] = (s.get("x") if s.get("x") is not None else 0) + (e.get("dx") or 0)

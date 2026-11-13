@@ -14,6 +14,7 @@
  * Флаги: --autoaim 1  — каждый шаг смотреть на ближайшего врага (упрощает обучение атаки).
  */
 const mineflayer = require('mineflayer');
+const Vec3 = require('vec3');
 const readline = require('readline');
 
 function arg(name, def) {
@@ -124,6 +125,7 @@ function buildObs() {
       dist: +d.toFixed(2),
     } : { exists: false },
     inventory: inventoryCounts(),
+    blocks: scanBlocks(),
   };
 }
 
@@ -134,6 +136,38 @@ function aimAtEnemy() {
     const dz = entity.position.z - bot.entity.position.z;
     bot.look(Math.atan2(-dx, -dz), 0, true);
   }
+}
+
+function placeBlockForward() {
+  // поставить блок перед собой (на пол, в направлении взгляда/авто-прицела)
+  try {
+    const yaw = bot.entity.yaw;
+    const dirX = -Math.sin(yaw);
+    const dirZ = -Math.cos(yaw);
+    const tx = Math.floor(bot.entity.position.x + dirX);
+    const tz = Math.floor(bot.entity.position.z + dirZ);
+    const ty = Math.floor(bot.entity.position.y); // уровень ног
+    const ref = bot.blockAt(new Vec3(tx, ty - 1, tz)); // блок пола под «впереди»
+    if (ref && ref.name !== 'air' && ref.name !== 'cave_air' && ref.name !== 'void_air') {
+      bot.placeBlock(ref, new Vec3(0, 1, 0)).catch(() => {});
+    }
+  } catch (e) {}
+}
+
+function scanBlocks() {
+  // шерсть/паутина на полу арены (10x10, y=64) — для миникарты
+  const blocks = [];
+  try {
+    for (let x = 0; x < 10; x++) {
+      for (let z = 0; z < 10; z++) {
+        const b = bot.blockAt(new Vec3(x, 64, z));
+        if (b && (b.name === 'cobweb' || b.name === 'web' || b.name.includes('wool'))) {
+          blocks.push([x, z, b.name]);
+        }
+      }
+    }
+  } catch (e) {}
+  return blocks;
 }
 
 function applyAction(a) {
@@ -160,7 +194,7 @@ function applyAction(a) {
     }
   }
   if (a.use) {
-    try { bot.activateItem(); bot.deactivateItem(); } catch (e) {}
+    placeBlockForward();
   }
 }
 

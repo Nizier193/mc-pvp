@@ -58,9 +58,11 @@ def main():
             action, _ = model.predict(obs, deterministic=True)
             obs, reward, done, _, info = env.step(action)
             rx, rz, bx, bz, hp, dist = flatten_to_state(obs)
+            raw = env.last_raw() or {}
             frames.append({
                 "step": step, "red_x": rx, "red_z": rz, "red_hp": hp,
                 "blue_x": bx, "blue_z": bz, "dist": dist,
+                "blocks": raw.get("blocks", []),
             })
             if done:
                 break
