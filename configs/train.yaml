@@ -54,6 +54,7 @@ training:
   learning_rate: 0.0003
   gamma: 0.99
   max_episode_steps: 300
+  device: cpu            # для MLP (не CNN) CPU быстрее GPU; для пикселей ставь cuda
 
 # --- вывод артефактов ---
 output:

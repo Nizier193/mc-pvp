@@ -281,7 +281,7 @@ def render_frames(payload):
         draw_text(img, 8, 8, str(f["step"]), WHITE, scale=2)
         write_png(out_dir / f"frame_{fi:04d}.png", W, H, img)
 
-    magick = shutil.which("magick") or "magick"
+    magick = shutil.which("magick") or shutil.which("convert") or "magick"
     frames_png = sorted(str(p) for p in out_dir.glob("frame_*.png"))
     gif = VIZ / "episode.gif"
     subprocess.run([magick, "-delay", "6", "-loop", "0", *frames_png, str(gif)], check=True)

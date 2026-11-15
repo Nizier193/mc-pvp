@@ -47,6 +47,7 @@ def main():
         learning_rate=training.get("learning_rate", 3e-4),
         gamma=training.get("gamma", 0.99),
         tensorboard_log=str(run_dir / "tb"),
+        device=training.get("device", "cpu"),
     )
     model.learn(total_timesteps=training.get("total_timesteps", 20000))
     model.save(str(run_dir / "model"))
