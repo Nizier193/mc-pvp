@@ -4,4 +4,5 @@ set -e
 cd "$(dirname "$0")/.."
 CONFIG="${1:-configs/train.yaml}"
 MODEL="${2:?usage: eval.sh <config.yaml> <model.zip>}"
-.venv/bin/python rl/eval.py --config "$CONFIG" --model "$MODEL"
+if [ -x .venv/bin/python ]; then PY=.venv/bin/python; else PY=python3; fi
+"$PY" rl/eval.py --config "$CONFIG" --model "$MODEL"
