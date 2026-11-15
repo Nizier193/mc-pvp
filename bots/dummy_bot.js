@@ -60,8 +60,18 @@ rl.on('line', (line) => {
 });
 
 function tick() {
-  if (still) return;  // неподвижный манекен (для демо/тестов)
   const { entity, dist: d } = nearestEnemy();
+  if (still) {
+    // Манекен: не двигаемся, но шлём look, чтобы физика не «протухала».
+    // Иначе после RCON-/tp на 61 блок вверх сервер кикает с
+    // «Invalid move player packet» (у idle-бота физика не ресинкается).
+    if (entity) {
+      const dx = entity.position.x - bot.entity.position.x;
+      const dz = entity.position.z - bot.entity.position.z;
+      bot.look(Math.atan2(-dx, -dz), 0, true);
+    }
+    return;
+  }
   if (!entity) {
     bot.setControlState('forward', false);
     return;
