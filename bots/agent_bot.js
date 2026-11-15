@@ -29,6 +29,9 @@ const version = arg('version', '1.8.9');
 const autoaim = arg('autoaim', '0') === '1';
 
 const bot = mineflayer.createBot({ host, port, username, version });
+// placeBlock вешает временные blockUpdate-листенеры; убираем лимит, чтобы не спамить warning
+try { bot.setMaxListeners(0); } catch (e) {}
+try { bot.world.setMaxListeners(0); } catch (e) {}
 
 function out(obj) {
   process.stdout.write(JSON.stringify(obj) + '\n');
@@ -140,7 +143,10 @@ function aimAtEnemy() {
 
 function placeBlockForward() {
   // поставить блок перед собой (на пол, в направлении взгляда/авто-прицела)
+  // ставим только если в руке реально ставимый блок (шерсть/паутина), а не меч
   try {
+    const held = bot.heldItem && bot.heldItem.name;
+    if (held !== 'wool' && held !== 'white_wool' && held !== 'web' && held !== 'cobweb') return;
     const yaw = bot.entity.yaw;
     const dirX = -Math.sin(yaw);
     const dirZ = -Math.cos(yaw);
