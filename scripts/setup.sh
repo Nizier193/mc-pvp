@@ -17,9 +17,14 @@ if ! command -v node >/dev/null 2>&1; then
 fi
 
 echo "==> Python-окружение"
+if command -v apt-get >/dev/null 2>&1; then
+  # без python3-venv команда `python3 -m venv` падает на ensurepip (классика Ubuntu/Colab)
+  apt-get install -y python3-venv python3-pip || true
+fi
+rm -rf .venv
 python3 -m venv .venv
-.venv/bin/pip install -U pip
-.venv/bin/pip install -r requirements.txt
+.venv/bin/python -m pip install -U pip
+.venv/bin/python -m pip install -r requirements.txt
 
 echo "==> Node-зависимости"
 npm install
