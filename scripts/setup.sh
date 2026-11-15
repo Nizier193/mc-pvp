@@ -18,12 +18,12 @@ fi
 
 echo "==> Python-окружение"
 if command -v apt-get >/dev/null 2>&1; then
-  # без python3-venv команда `python3 -m venv` падает на ensurepip (классика Ubuntu/Colab)
   apt-get install -y python3-venv python3-pip || true
 fi
 
-# На Colab `python3` часто указывает на managed-интерпретатор с битым ensurepip.
-# Берём системный /usr/bin/python3, для которого python3-venv даёт рабочий venv.
+# На Colab `python3` и даже `/usr/bin/python3` могут быть managed-интерпретаторами
+# с битым ensurepip (deadsnakes-PPA ставит 3.13, а apt python3-venv даёт 3.12).
+# Поэтому: пробуем venv, при неудаче ставим зависимости глобально.
 PYBASE=""
 for c in /usr/bin/python3 python3; do
   if command -v "$c" >/dev/null 2>&1; then PYBASE="$c"; break; fi
@@ -32,17 +32,20 @@ echo "используем python: $PYBASE"
 
 rm -rf .venv
 if "$PYBASE" -m venv .venv; then
-  .venv/bin/python -m pip install -U pip
-  .venv/bin/python -m pip install -r requirements.txt
+  PY=.venv/bin/python
+  "$PY" -m pip install -U pip
+  "$PY" -m pip install -r requirements.txt
 else
   echo "!! venv не создался — ставлю зависимости глобально"
-  "$PYBASE" -m pip install --break-system-packages -r requirements.txt
+  rm -rf .venv   # убираем недоделанный venv, чтобы train.sh его не подхватил
+  PY="$PYBASE"
+  "$PY" -m pip install --break-system-packages -r requirements.txt
 fi
 
 echo "==> Node-зависимости"
 npm install
 
 echo "==> Minecraft server"
-.venv/bin/python scripts/download_server.py
+"$PY" scripts/download_server.py
 
 echo "==> Готово. Дальше:  bash scripts/train.sh configs/train.yaml"
