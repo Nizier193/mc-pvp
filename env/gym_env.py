@@ -37,6 +37,7 @@ class MinecraftPvPEnv(gym.Env):
             self._server_proc = self._boot()
         self.arena.spawn_bots()
         self.arena.wait_bots_ready()
+        self.arena.wait_players()
 
         self.observation_space = spaces.Box(low=-np.inf, high=np.inf, shape=(16,), dtype=np.float32)
         self.action_space = spaces.MultiDiscrete([5, 2, 2, 3, 2])  # move, attack, jump, slot, use
