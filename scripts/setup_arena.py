@@ -50,14 +50,21 @@ def build_arena(cfg, ports):
     floor = arena["floor_block"]
     wall = arena["wall_block"]
     print("[arena] пол + толстая опора")
-    # толстая опора от поверхности (y=4) до пола (fy): при столкновениях бот не
-    # проваливается сквозь 1-блочный пол на землю.
-    cmd(f"fill {x0} 4 {z0} {x1} {fy} {z1} {floor}")
+    # толстая опора от y=6 до пола (fy): снизу оставляем воздушный зазор (y=4..5),
+    # чтобы боты, спавнящиеся на natural terrain (y=4), не задыхались в залитом
+    # полу и доживали до телепорта на арену.
+    cmd(f"fill {x0} 6 {z0} {x1} {fy} {z1} {floor}")
     print("[arena] стены")
     cmd(f"fill {x0-1} {fy+1} {z0-1} {x1+1} {fy+h} {z0-1} {wall}")   # север
     cmd(f"fill {x0-1} {fy+1} {z1+1} {x1+1} {fy+h} {z1+1} {wall}")   # юг
     cmd(f"fill {x0-1} {fy+1} {z0} {x0-1} {fy+h} {z1} {wall}")       # запад
     cmd(f"fill {x1+1} {fy+1} {z0} {x1+1} {fy+h} {z1} {wall}")       # восток
+
+    # 4) ВАЖНО: ставим спавн ПОСЛЕ заливки пола — теперь «земля» на арене = fy,
+    #    и боты появляются на поверхности (fy+1), а не внутри пола (y=4),
+    #    где они задыхались и получали «Invalid move player packet».
+    cmd(f"setworldspawn {cx} {fy+1} {cz}")
+    cmd("save-all")
     rcon.close()
     print("[arena] готово")
 

@@ -65,22 +65,39 @@ class ArenaEnv:
         for name, bot in self.bots.items():
             bot.wait_ready(timeout=timeout)
 
-    def wait_players(self, timeout=30.0):
+    def wait_players(self, timeout=40.0):
         """Ждём, пока сервер увидит ботов в списке игроков (`list`).
 
         Клиентский spawn у mineflayer срабатывает раньше, чем сервер добавит
         игрока в список: без этого /tp и /clear падают с «No player was found».
+        Опрашиваем часто (0.2с) через ОДНО соединение — иначе бот успевает
+        задохнуться в полу до первого /tp.
         """
         names = [a["name"] for a in self.cfg["agents"]]
         deadline = time.time() + timeout
-        while time.time() < deadline:
-            try:
-                out = (self.rcon("list") or [""])[0] or ""
-                if all(n in out for n in names):
-                    return True
-            except Exception:
-                pass
-            time.sleep(1.0)
+        rcon = None
+        try:
+            while time.time() < deadline:
+                try:
+                    if rcon is None:
+                        rcon = self._rcon()
+                    out = rcon.command("list") or ""
+                    if all(n in out for n in names):
+                        return True
+                except Exception:
+                    try:
+                        if rcon is not None:
+                            rcon.close()
+                    except Exception:
+                        pass
+                    rcon = None
+                time.sleep(0.2)
+        finally:
+            if rcon is not None:
+                try:
+                    rcon.close()
+                except Exception:
+                    pass
         print(f"  [arena] WARN: сервер не видит ботов за {timeout}s: {names}", flush=True)
         return False
 
