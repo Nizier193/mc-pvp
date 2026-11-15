@@ -79,6 +79,30 @@ def main():
 
     env.close()
 
+    # сводка в experiments/runs/
+    seen_blue = sum(1 for f in frames if f.get("blue_x") is not None)
+    moved = None
+    if len(frames) > 1 and frames[0].get("red_x") is not None and frames[-1].get("red_x") is not None:
+        dx = frames[-1]["red_x"] - frames[0]["red_x"]
+        dz = frames[-1]["red_z"] - frames[0]["red_z"]
+        moved = (dx * dx + dz * dz) ** 0.5
+    dists = [f["dist"] for f in frames if f.get("dist") is not None]
+    min_dist = min(dists) if dists else None
+
+    from env.report import write_report
+    run_name = cfg.get("output", {}).get("run_name", "run")
+    write_report(f"{run_name}_eval", cfg, f"""
+## Инференс
+
+- эпизодов: {args.episodes}
+- шагов в последнем эпизоде: {len(frames)}
+- агент видел врага: {seen_blue}/{len(frames)} кадров
+- сдвинулся красный: {moved:.2f} блоков (0 = стоит на месте)
+- минимальная дистанция до врага: {min_dist}
+- финальный HP красного: {frames[-1]['red_hp'] if frames else None}
+- гифка: `{out / 'episode_0' / 'episode.gif'}`
+""")
+
 
 if __name__ == "__main__":
     main()

@@ -14,7 +14,7 @@ server:
 
 # --- поведение ботов ---
 autoaim: true            # агент всегда смотрит на врага
-dummy_still: false       # false = dummy преследует и бьёт; true = неподвижный манекен
+dummy_still: true        # true = неподвижный манекен (чище для 1-го обучения); false = dummy преследует
 
 # --- арена ---
 arena:

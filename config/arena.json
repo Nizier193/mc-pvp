@@ -10,7 +10,7 @@
     "level_name": "world"
   },
   "autoaim": true,
-  "dummy_still": false,
+  "dummy_still": true,
   "arena": {
     "side": 10,
     "floor_y": 64,

@@ -56,6 +56,16 @@ def main():
     print(f"[ok] модель: {run_dir / 'model.zip'}")
     print(f"[ok] артефакты: {run_dir}")
 
+    from env.report import write_report
+    write_report(f"{run_name}_train", cfg, f"""
+## Итог обучения
+
+- модель: `{run_dir / 'model.zip'}`
+- timesteps: {training.get('total_timesteps')}
+- артефакты: `{run_dir}`
+- кривые: `tensorboard --logdir {run_dir / 'tb'}`
+""")
+
 
 if __name__ == "__main__":
     main()

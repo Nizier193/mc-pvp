@@ -54,11 +54,12 @@ class MinecraftPvPEnv(gym.Env):
         # спавн мира = центр арены, чтобы боты не спавнились далеко
         arena = self.cfg["arena"]
         rcon = RCON(ports["host"], ports["rcon_port"], self.cfg["server"]["rcon_password"])
+        rcon.command("gamerule spawnRadius 0")  # боты появляются ровно в точке спавна
         rcon.command(f"setworldspawn {arena['center']['x']} {arena['floor_y'] + 1} {arena['center']['z']}")
         rcon.close()
 
-        self.arena.teleport_to_spawns(y=5)
-        time.sleep(1.5)
+        # строим арену ДО спавна ботов: они появятся уже на её поверхности
+        # (телепорт в y=5 внутрь пола раньше давал кик «Invalid move player packet»)
         setup_arena.build_arena(self.cfg, ports)
         return server_proc
 

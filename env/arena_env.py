@@ -70,27 +70,56 @@ class ArenaEnv:
 
     # --- эпизод ---
     def reset(self):
-        """Сброс эпизода: сброс флагов, телепорт в углы (bot.teleport), выдача предметов."""
+        """Сброс: телепорт в углы + выдача предметов, с проверкой и ретраями.
+
+        На Colab телепорт иногда «теряется» (гонка: игрок ещё не в списке /tp),
+        из-за чего бот остаётся на world spawn (5,5), не видит врага и не получает
+        награду. Поэтому проверяем фактическую позицию и повторяем до 3 раз.
+        """
         for name in self.agent_names():
             self.bots[name].send({"type": "reset"})
         arena = self.cfg["arena"]
         items = self.cfg["items"]
         y = arena["floor_y"] + 1
-        cmds = []
-        for i, ag in enumerate(self.cfg["agents"]):
-            name = ag["name"]
-            sp = arena["spawns"][i]
-            self.bots[name].send({"type": "reset"})
-            cmds += [
-                f"clear {name}",
-                f"tp {name} {sp['x']} {y} {sp['z']}",
-                f"replaceitem entity {name} container.{items['sword_slot']} {items['sword']} 1",
-                f"replaceitem entity {name} container.{items['wool_slot']} {items['wool']} {items['wool_count']}",
-                f"replaceitem entity {name} container.{items['cobweb_slot']} {items['cobweb']} {items['cobweb_count']}",
-            ]
-        self.rcon(*cmds)
-        time.sleep(0.5)
-        return self.step({n: _default_action() for n in self.agent_names()})
+
+        obs, rewards, dones = {}, {}, {}
+        for attempt in range(3):
+            cmds = []
+            for i, ag in enumerate(self.cfg["agents"]):
+                name = ag["name"]
+                sp = arena["spawns"][i]
+                self.bots[name].send({"type": "reset"})
+                cmds += [
+                    f"clear {name}",
+                    f"tp {name} {sp['x']} {y} {sp['z']}",
+                    f"replaceitem entity {name} container.{items['sword_slot']} {items['sword']} 1",
+                    f"replaceitem entity {name} container.{items['wool_slot']} {items['wool']} {items['wool_count']}",
+                    f"replaceitem entity {name} container.{items['cobweb_slot']} {items['cobweb']} {items['cobweb_count']}",
+                ]
+            outs = self.rcon(*cmds)
+            time.sleep(0.5)
+            obs, rewards, dones = self.step({n: _default_action() for n in self.agent_names()})
+
+            # проверяем позиции ТОЛЬКО агентов (dummy не отдаёт obs через step)
+            bad = []
+            for i, ag in enumerate(self.cfg["agents"]):
+                if ag["name"] not in self.agent_names():
+                    continue
+                s = ((obs.get(ag["name"]) or {}).get("self") or {})
+                px, pz = s.get("x"), s.get("z")
+                sp = arena["spawns"][i]
+                if px is None or abs(px - sp["x"]) > 2.0 or abs(pz - sp["z"]) > 2.0:
+                    bad.append(f"{ag['name']}@{px},{pz} (ожид {sp['x']},{sp['z']})")
+
+            if not bad:
+                return obs, rewards, dones
+
+            print(f"  [reset] попытка {attempt + 1}: не на спавне: {'; '.join(bad)}", flush=True)
+            for c, o in zip(cmds, outs):
+                if c.startswith("tp ") or c.startswith("clear "):
+                    print(f"    [rcon] {c} -> {str(o).strip() if o else 'OK'}", flush=True)
+
+        return obs, rewards, dones
 
     def step(self, actions):
         for name in self.agent_names():
@@ -122,17 +151,18 @@ def start_full(cfg, instance_id=0):
     server_proc, _ = start_server.start(start_server.ROOT, cfg, instance_id)
     start_server.wait_ready(cfg, ports, proc=server_proc)
 
-    # спавн мира = центр арены ДО подключения ботов: иначе они заспавнятся далеко
+    # спавн мира = центр арены ДО подключения ботов, иначе они заспавнятся далеко
     # и /tp на 300+ блоков вызовет «Invalid move packet» (kick).
     arena = cfg["arena"]
     rcon = RCON(ports["host"], ports["rcon_port"], cfg["server"]["rcon_password"])
+    rcon.command("gamerule spawnRadius 0")  # боты появляются ровно в точке спавна
     rcon.command(f"setworldspawn {arena['center']['x']} {arena['floor_y'] + 1} {arena['center']['z']}")
     rcon.close()
+
+    # строим арену ДО спавна ботов (иначе телепорт в y=5 внутрь пола = кик)
+    setup_arena.build_arena(cfg, ports)
 
     env = ArenaEnv(cfg, instance_id=instance_id)
     env.spawn_bots()
     env.wait_bots_ready()
-    env.teleport_to_spawns(y=5)   # грузим чанки арены
-    time.sleep(1.5)
-    setup_arena.build_arena(cfg, ports)
     return env, server_proc
